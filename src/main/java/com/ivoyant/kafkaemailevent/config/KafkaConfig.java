@@ -11,4 +11,9 @@ public class KafkaConfig {
         return new NewTopic("email-event", 3, (short) 1);
     }
 
+    @Bean
+    public NewTopic createTopic2(){
+        return new NewTopic("email-attach-event",3, (short) 1);
+    }
+
 }
