@@ -1,5 +1,6 @@
 package com.ivoyant.kafkaemailevent.controller;
 
+import com.ivoyant.kafkaemailevent.dto.EmailAttachDto;
 import com.ivoyant.kafkaemailevent.dto.EmailDto;
 import com.ivoyant.kafkaemailevent.service.EmailService;
 import jakarta.validation.Valid;
@@ -24,6 +25,11 @@ public class EmailController {
     @PostMapping
     public ResponseEntity<String> createEmailEvent(@Valid @RequestBody EmailDto emailDto) {
         return ResponseEntity.ok(emailService.createEmailEvent(emailDto));
+    }
+
+    @PostMapping("/attachment")
+    public ResponseEntity<String> createEmailAttachmentEvent(@Valid @RequestBody EmailAttachDto emailAttachDto){
+        return ResponseEntity.ok(emailService.createEmailAttachmentEvent(emailAttachDto));
     }
 
 
