@@ -4,3 +4,7 @@ spring:
       bootstrap-servers: localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topics:
+      dynamic-topic1: email-event   # Value for the first dynamic topic
+      dynamic-topic2: email-attach-event  # Value for the second dynamic topic
+      email-event: 3

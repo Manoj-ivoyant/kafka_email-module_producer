@@ -9,6 +9,7 @@ import com.ivoyant.kafkaemailevent.repository.EmailRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,12 @@ public class EmailService {
     private final EmailAttachRepository emailAttachRepository;
     private final KafkaTemplate<String, Object> template;
 
+    @Value("${spring.kafka.topics.dynamic-topic1}")
+    private String dynamicTopic1;
+
+    @Value("${spring.kafka.topics.dynamic-topic2}")
+    private String dynamicTopic2;
+
     private Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
 
     @Autowired
@@ -40,7 +47,7 @@ public class EmailService {
                 .subject(emailDto.getSubject()).body(emailDto.getBody()).createdAt(Instant.now()).build();
         LOGGER.info("email created and saved to cassandra cluster {}", email.getEmailId());
         emailRepository.save(email);
-        CompletableFuture<SendResult<String, Object>> future = template.send("email-event", emailDto);
+        CompletableFuture<SendResult<String, Object>> future = template.send(dynamicTopic1, emailDto);
         future.whenComplete((result, ex) -> {
             if (ex == null) {
                 LOGGER.info("Sent message=[" + emailDto.toString() +
@@ -60,7 +67,7 @@ public class EmailService {
                 .attachment(emailAttachDto.getAttachment()).build();
         LOGGER.info("email with attachment created and saved to cassandra cluster {}", emailAttach.getEmailId());
         emailAttachRepository.save(emailAttach);
-        CompletableFuture<SendResult<String, Object>> future = template.send("email-attach-event", emailAttachDto);
+        CompletableFuture<SendResult<String, Object>> future = template.send(dynamicTopic2, emailAttachDto);
         future.whenComplete((result, ex) -> {
             if (ex == null) {
                 LOGGER.info("Sent message=[" + emailAttachDto.toString() +
