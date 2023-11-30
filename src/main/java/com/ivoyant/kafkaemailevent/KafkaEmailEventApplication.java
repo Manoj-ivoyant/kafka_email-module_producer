@@ -9,5 +9,4 @@ public class KafkaEmailEventApplication {
     public static void main(String[] args) {
         SpringApplication.run(KafkaEmailEventApplication.class, args);
     }
-
 }
