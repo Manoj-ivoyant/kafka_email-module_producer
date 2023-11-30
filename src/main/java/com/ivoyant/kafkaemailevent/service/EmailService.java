@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -22,22 +23,23 @@ import java.util.concurrent.CompletableFuture;
 public class EmailService {
 
     private final EmailRepository emailRepository;
-
+    private final JmsTemplate pubJmsTemplate;
     private final EmailAttachRepository emailAttachRepository;
     private final KafkaTemplate<String, Object> template;
-
+    private final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     @Value("${spring.kafka.topics.dynamic-topic1}")
     private String dynamicTopic1;
-
     @Value("${spring.kafka.topics.dynamic-topic2}")
     private String dynamicTopic2;
-
-    private Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
+    @Value("${spring.jms.queue-name}")
+    private String queueName;
 
     @Autowired
-    public EmailService(EmailRepository emailRepository, EmailAttachRepository emailAttachRepository, KafkaTemplate<String, Object> template) {
+    public EmailService(EmailRepository emailRepository, EmailAttachRepository emailAttachRepository,
+                        KafkaTemplate<String, Object> template, JmsTemplate pubJmsTemplate) {
         this.emailRepository = emailRepository;
         this.emailAttachRepository = emailAttachRepository;
+        this.pubJmsTemplate = pubJmsTemplate;
         this.template = template;
     }
 
@@ -48,13 +50,13 @@ public class EmailService {
         LOGGER.info("email created and saved to cassandra cluster {}", email.getEmailId());
         emailRepository.save(email);
         CompletableFuture<SendResult<String, Object>> future = template.send(dynamicTopic1, emailDto);
+
         future.whenComplete((result, ex) -> {
             if (ex == null) {
-                LOGGER.info("Sent message=[" + emailDto.toString() +
-                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+                LOGGER.info("Sent message=[ {} ] with offset=[ {} ]", emailDto,
+                        result.getRecordMetadata().offset());
             } else {
-                LOGGER.error("Unable to send message=[" +
-                        emailDto.toString() + "] due to : " + ex.getMessage());
+                LOGGER.error("Unable to send message=[ {} ] due to :  {}", emailDto, ex.getMessage());
             }
         });
         return email.getEmailId();
@@ -70,13 +72,19 @@ public class EmailService {
         CompletableFuture<SendResult<String, Object>> future = template.send(dynamicTopic2, emailAttachDto);
         future.whenComplete((result, ex) -> {
             if (ex == null) {
-                LOGGER.info("Sent message=[" + emailAttachDto.toString() +
-                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+                LOGGER.info("Sent message=[ {} ] with offset=[ {} ]", emailAttachDto,
+                        result.getRecordMetadata().offset());
             } else {
-                LOGGER.error("Unable to send message=[" +
-                        emailAttachDto.toString() + "] due to : " + ex.getMessage());
+                LOGGER.error("Unable to send message=[ {} ] due to :  {}", emailAttachDto, ex.getMessage());
             }
         });
         return emailAttach.getEmailId();
     }
+
+    public void sendMessage(String message) {
+        LOGGER.info("message has been added to queue {}", message);
+        pubJmsTemplate.convertAndSend(queueName, message);
+    }
+
 }
+

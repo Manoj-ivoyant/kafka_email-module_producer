@@ -6,10 +6,7 @@ import com.ivoyant.kafkaemailevent.service.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/emails")
@@ -30,6 +27,11 @@ public class EmailController {
     @PostMapping("/attachment")
     public ResponseEntity<String> createEmailAttachmentEvent(@Valid @RequestBody EmailAttachDto emailAttachDto){
         return ResponseEntity.ok(emailService.createEmailAttachmentEvent(emailAttachDto));
+    }
+
+    @GetMapping("/message")
+    public void sendMessage(@RequestParam String message){
+        emailService.sendMessage(message);
     }
 
 
